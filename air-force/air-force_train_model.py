@@ -29,7 +29,7 @@ for category in categories:
     # year 특성에 가중치를 곱해 추가 
     scaler_year = MinMaxScaler()
     df_category['year_scaled'] = scaler_year.fit_transform(df_category['year'].values.reshape(-1, 1))
-    df_category['year_weighted'] = df_category['year_scaled'] * 1.7  # 가중치 1.7배
+    df_category['year_weighted'] = df_category['year_scaled'] * 1.5  # 가중치 1.7배
 
     X = df_category[['time_index', 'sin_month', 'cos_month', 'year_scaled', 'year_weighted']].values
     y = df_category['score'].values
@@ -79,6 +79,12 @@ for category in categories:
     mae = mean_absolute_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
     print(f"카테고리: {category}, Test MSE: {mse}, Test MAE: {mae}, R²: {r2}")
+    
+    # y_pred_scaled = model.predict(X_test)
+    # mse_scaled = mean_squared_error(y_test, y_pred_scaled)
+    # mae_scaled = mean_absolute_error(y_test, y_pred_scaled)
+    # r2 = r2_score(y_test, y_pred_scaled)
+    # print(f"카테고리: {category}, Test MSE (scaled): {mse_scaled}, Test MAE (scaled): {mae_scaled}, R²: {r2}")
 
     # 학습된 모델과 스케일러 저장
     save_dir = "air-force/trained_model"

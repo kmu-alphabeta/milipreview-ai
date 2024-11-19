@@ -29,7 +29,7 @@ for category in categories:
     # year 특성에 가중치를 곱해 추가 
     scaler_year = MinMaxScaler()
     df_category['year_scaled'] = scaler_year.fit_transform(df_category['year'].values.reshape(-1, 1))
-    df_category['year_weighted'] = df_category['year_scaled'] * 1.7  # 가중치 1.7배
+    df_category['year_weighted'] = df_category['year_scaled'] * 1.5  # 가중치 1.7배
 
     X = df_category[['time_index', 'sin_month', 'cos_month', 'year_scaled', 'year_weighted']].values
     y = df_category['score'].values
@@ -85,9 +85,12 @@ for category in categories:
     
     # if not os.path.exists(save_dir):
     #     os.makedirs(save_dir)
+    
+    # '/'를 '_'로 대체하거나 제거
+    safe_category = category.replace('/', '+')
         
-    model.save(os.path.join(save_dir, f"model_{category}.h5"))  # 모델 저장
-    joblib.dump(scaler_X, os.path.join(save_dir, f"scaler_X_{category}.pkl"))  # 입력 스케일러 저장
-    joblib.dump(scaler_y, os.path.join(save_dir, f"scaler_y_{category}.pkl"))  # 출력 스케일러 저장
+    model.save(os.path.join(save_dir, f"model_{safe_category}.h5"))  # 모델 저장
+    joblib.dump(scaler_X, os.path.join(save_dir, f"scaler_X_{safe_category}.pkl"))  # 입력 스케일러 저장
+    joblib.dump(scaler_y, os.path.join(save_dir, f"scaler_y_{safe_category}.pkl"))  # 출력 스케일러 저장
 
 print("모든 카테고리에 대해 모델 학습 및 저장이 완료되었습니다.")

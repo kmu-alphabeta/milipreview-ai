@@ -61,15 +61,18 @@ def user_predict(military, category, year, month, user_score):
     predicted_cutoff = predict_cutoff(military, category, year, month)
     pass_probability = calculate_probability(user_score, predicted_cutoff)
     pass_probability = int(round(pass_probability, 2) * 100)
+    if predicted_cutoff < user_score:
+        pass_status = "합격"
+    else: pass_status = "불합격"
     
-    return predicted_cutoff, pass_probability
+    return predicted_cutoff, pass_probability, pass_status
 
 if __name__ == "__main__":
-    military = "navy"   # 종류 : army, air-force, army
-    category = "수송"
+    military = "marine"   # 종류 : army, air-force, army, marine
+    category = "동반입대"
     user_input = 84
     year = 2025
-    month = 1
+    month = 8
     
     print(user_predict(military, category, year, month, user_input))
 
