@@ -65,10 +65,10 @@ for category in categories:
     output_layer = Dense(1)(x)
 
     model = Model(inputs=input_layer, outputs=output_layer)
-    model.compile(optimizer=Adam(learning_rate=0.001), loss='mse')
+    model.compile(optimizer=Adam(learning_rate=0.0007), loss='mse')
 
     early_stopping = EarlyStopping(monitor='loss', patience=10, restore_best_weights=True)
-    model.fit(X_train, y_train, sample_weight=weights_train, epochs=500, batch_size=16, verbose=0, callbacks=[CustomPrintCallback(), early_stopping])
+    model.fit(X_train, y_train, sample_weight=weights_train, epochs=800, batch_size=16, verbose=0, callbacks=[CustomPrintCallback(), early_stopping])
 
     # 테스트 데이터 평가
     y_pred = model.predict(X_test)

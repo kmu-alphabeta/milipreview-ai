@@ -58,6 +58,8 @@ def calculate_probability(user_input, predicted_cutoff):
 # 사용자 입력------------------------------- 
 # 합격컷, 합불 예측 함수
 def user_predict(military, category, year, month, user_score):
+    if military == "army":
+        category = category.replace('/', '+')
     predicted_cutoff = predict_cutoff(military, category, year, month)
     pass_probability = calculate_probability(user_score, predicted_cutoff)
     pass_probability = int(round(pass_probability, 2) * 100)
@@ -68,11 +70,11 @@ def user_predict(military, category, year, month, user_score):
     return predicted_cutoff, pass_probability, pass_status
 
 if __name__ == "__main__":
-    military = "marine"   # 종류 : army, air-force, army, marine
-    category = "동반입대"
-    user_input = 84
+    military = "army"   # 종류 : army, air-force, army, marine
+    category = "K계열전차승무"
+    user_input = 50
     year = 2025
-    month = 8
+    month = 2
     
     print(user_predict(military, category, year, month, user_input))
 
