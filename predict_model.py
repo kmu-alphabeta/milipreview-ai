@@ -26,34 +26,29 @@ def predict_cutoff(millitary, category, year, month):
     cos_month = np.cos(2 * np.pi * month / 12)
 
     scaler_year = MinMaxScaler()
-    scaler_year.fit(np.array([2022, 2023, 2024]).reshape(-1, 1))  # 학습 시 사용된 연도 범위
+    scaler_year.fit(np.array([2022, 2023, 2024]).reshape(-1, 1))
     year_scaled = scaler_year.transform([[year]])[0][0]
-    year_weighted = year_scaled * 1.7  # 연도에 가중치 적용
+    year_weighted = year_scaled * 1.7
 
     X_future = np.array([[time_index, sin_month, cos_month, year_scaled, year_weighted]])
 
-    # 입력 데이터 정규화 및 LSTM 형식으로 변환
     X_future = scaler_X.transform(X_future)
     X_future = X_future.reshape((1, 1, X_future.shape[1]))
 
-    # 예측 수행 및 정규화 해제
     predicted_cutoff = model.predict(X_future)
     predicted_cutoff = scaler_y.inverse_transform(predicted_cutoff)[0][0]
     return predicted_cutoff
 
-# 확률 계산 함수 정의
 def calculate_probability(user_input, predicted_cutoff):
     difference = user_input - predicted_cutoff
 
+    # 커트라인에 따른 사용자 합격 확률
     if difference < 0:
-        # 커트라인을 넘지 못한 경우
-        return 1 / (1 + exp(-0.15 * difference))  # 낮은 확률
+        return 1 / (1 + exp(-0.15 * difference))
     elif 0 <= difference < 5:
-        # 커트라인과 5점 이내
-        return 0.7 + (0.05 * difference)  # 선형 증가
+        return 0.7 + (0.05 * difference)
     else:
-        # 커트라인을 5점 이상 초과
-        return 0.9 + 0.01 * (difference - 5)  # 높은 확률
+        return 0.9 + 0.01 * (difference - 5)
 
 # 사용자 입력------------------------------- 
 # 합격컷, 합불 예측 함수
