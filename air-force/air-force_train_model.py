@@ -9,7 +9,9 @@ from tensorflow.keras.callbacks import Callback, EarlyStopping
 from tensorflow.keras.optimizers import Adam
 import joblib
 import os
+import tarfile
 
+# 데이터 불러오기 및 전처리
 df = pd.read_csv("data\\air_force_data.csv")
 df['time_index'] = df['year'] + df['month'] / 12
 df['sin_month'] = np.sin(2 * np.pi * df['month'] / 12)
@@ -22,13 +24,19 @@ class CustomPrintCallback(Callback):
         if (epoch + 1) % 100 == 0:
             print(f"Epoch {epoch + 1}, Loss: {logs['loss']}")
 
-# 카테고리별로 모델 학습
-for category in categories:
-    df_category = df[df['category'] == category].copy()
+# 모델 저장 디렉토리
+base_dir = "air-force/trained_model"
+os.makedirs(base_dir, exist_ok=True)
 
+# 카테고리별로 모델 학습 및 저장
+for category in categories:
+    print(f"Processing category: {category}")
+    
+    # 데이터 필터링
+    df_category = df[df['category'] == category].copy()
     scaler_year = MinMaxScaler()
     df_category['year_scaled'] = scaler_year.fit_transform(df_category['year'].values.reshape(-1, 1))
-    df_category['year_weighted'] = df_category['year_scaled'] * 1.5  # 가중치 1.7배
+    df_category['year_weighted'] = df_category['year_scaled'] * 1.5
 
     X = df_category[['time_index', 'sin_month', 'cos_month', 'year_scaled', 'year_weighted']].values
     y = df_category['score'].values
@@ -40,15 +48,14 @@ for category in categories:
     y = scaler_y.fit_transform(y.reshape(-1, 1))
 
     X = X.reshape((X.shape[0], 1, X.shape[1]))
-
     weights = np.exp(np.linspace(0, 3, len(X)))
 
-    if len(X) > 1:  # 분할 가능한지 판단
+    # 데이터 분할
+    if len(X) > 1:
         X_train, X_test, y_train, y_test, weights_train, weights_test = train_test_split(
             X, y, weights, test_size=0.2, random_state=42, shuffle=False
         )
     else:
-        # 데이터가 부족한 경우 테스트 데이터를 사용 X
         print(f"Category {category} has limited data. Using all data for training.")
         X_train, y_train, weights_train = X, y, weights
         X_test, y_test = X, y
@@ -75,21 +82,19 @@ for category in categories:
     mae = mean_absolute_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
     print(f"카테고리: {category}, Test MSE: {mse}, Test MAE: {mae}, R²: {r2}")
-    
-    # y_pred_scaled = model.predict(X_test)
-    # mse_scaled = mean_squared_error(y_test, y_pred_scaled)
-    # mae_scaled = mean_absolute_error(y_test, y_pred_scaled)
-    # r2 = r2_score(y_test, y_pred_scaled)
-    # print(f"카테고리: {category}, Test MSE (scaled): {mse_scaled}, Test MAE (scaled): {mae_scaled}, R²: {r2}")
 
-    # 모델과 스케일러 저장
-    save_dir = "air-force/trained_model"
-    
-    # if not os.path.exists(save_dir):
-    #     os.makedirs(save_dir)
-        
-    model.save(os.path.join(save_dir, f"model_{category}.h5"))
-    joblib.dump(scaler_X, os.path.join(save_dir, f"scaler_X_{category}.pkl"))
-    joblib.dump(scaler_y, os.path.join(save_dir, f"scaler_y_{category}.pkl"))
+    # SavedModel 저장
+    version_dir = os.path.join(base_dir, f"model_{category}/1")
+    os.makedirs(version_dir, exist_ok=True)
+    model.save(version_dir)
+    joblib.dump(scaler_X, os.path.join(version_dir, f"scaler_X_{category}.pkl"))
+    joblib.dump(scaler_y, os.path.join(version_dir, f"scaler_y_{category}.pkl"))
+
+    # .tar.gz로 압축
+    tar_path = os.path.join(base_dir, f"model_{category}.tar.gz")
+    with tarfile.open(tar_path, "w:gz") as tar:
+        tar.add(version_dir, arcname="1")  # 최상위 디렉토리 '1'로 설정
+
+    print(f"Category {category}: Saved model and scalers to {tar_path}")
 
 print("모든 카테고리에 대해 모델 학습 및 저장이 완료되었습니다.")

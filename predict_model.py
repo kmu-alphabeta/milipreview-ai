@@ -72,12 +72,3 @@ if __name__ == "__main__":
     month = 2
     
     print(user_predict(military, category, year, month, user_input))
-
-# pass_probability = calculate_probability(user_input, predict_cutoff(category, year, month))
-# print(f"사용자가 {month}월에 합격할 확률: {pass_probability * 100:.2f}%")
-
-# 2025년 월별 카테고리별 합격컷 예측
-# print(f"=== 카테고리: {category} ===")
-# for month in range(1, 13):
-#     predicted_cutoff = predict_cutoff(category, 2025, month)
-#     print(f"2025년 {month}월 예측 커트라인: {predicted_cutoff:.2f}")

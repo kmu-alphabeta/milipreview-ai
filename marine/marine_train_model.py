@@ -9,7 +9,9 @@ from tensorflow.keras.callbacks import Callback, EarlyStopping
 from tensorflow.keras.optimizers import Adam
 import joblib
 import os
+import tarfile
 
+# 데이터 불러오기 및 전처리
 df = pd.read_csv("data\\marine_data.csv")
 df['time_index'] = df['year'] + df['month'] / 12
 df['sin_month'] = np.sin(2 * np.pi * df['month'] / 12)
@@ -22,8 +24,15 @@ class CustomPrintCallback(Callback):
         if (epoch + 1) % 100 == 0:
             print(f"Epoch {epoch + 1}, Loss: {logs['loss']}")
 
+# 저장 디렉토리 설정
+base_dir = "marine/trained_model"
+os.makedirs(base_dir, exist_ok=True)
+
 # 카테고리별로 모델 학습
 for category in categories:
+    print(f"Processing category: {category}")
+
+    # 데이터 필터링
     df_category = df[df['category'] == category].copy()
 
     scaler_year = MinMaxScaler()
@@ -76,14 +85,20 @@ for category in categories:
     r2 = r2_score(y_test, y_pred)
     print(f"카테고리: {category}, Test MSE: {mse}, Test MAE: {mae}, R²: {r2}")
 
-    # 모델과 스케일러 저장
-    save_dir = "marine/trained_model"
-    
-    # if not os.path.exists(save_dir):
-    #     os.makedirs(save_dir)
-        
-    model.save(os.path.join(save_dir, f"model_{category}.h5"))
-    joblib.dump(scaler_X, os.path.join(save_dir, f"scaler_X_{category}.pkl"))
-    joblib.dump(scaler_y, os.path.join(save_dir, f"scaler_y_{category}.pkl"))
+    # 모델 저장 디렉토리 생성
+    version_dir = os.path.join(base_dir, f"model_{category}/1")
+    os.makedirs(version_dir, exist_ok=True)
+
+    # SavedModel 저장
+    model.save(version_dir)
+    joblib.dump(scaler_X, os.path.join(version_dir, f"scaler_X_{category}.pkl"))
+    joblib.dump(scaler_y, os.path.join(version_dir, f"scaler_y_{category}.pkl"))
+
+    # .tar.gz로 압축
+    tar_path = os.path.join(base_dir, f"model_{category}.tar.gz")
+    with tarfile.open(tar_path, "w:gz") as tar:
+        tar.add(version_dir, arcname="1")  # 최상위 디렉토리 '1'로 설정
+
+    print(f"Category {category}: Saved model and scalers to {tar_path}")
 
 print("모든 카테고리에 대해 모델 학습 및 저장이 완료되었습니다.")
